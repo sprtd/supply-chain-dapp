@@ -3,13 +3,17 @@
 pragma solidity >=0.5.0 <0.9.0;
 
 contract SupplyChain {
+
   address owner;
   uint upc;
   uint sku;
 
+
+
   enum State {
     Unassigned, 
     Harvested, 
+    Processed,
     Packed,
     ForSale,
     Sold,
@@ -22,21 +26,169 @@ contract SupplyChain {
 
 
   struct Item {
-    uint sku;
-    uint upc;
-    address ownerID;
-    address farmID;
-    string originFarmInformation;
-    string originFarmLatitude;
-    string originFarmLongitude;
-    uint productID;
-    string productNotes;
-    uint productPrice;
-    State itemState;
-    address distributorID;
-    address retailerID;
+      uint sku;
+      uint upc;
+      address ownerID;
+      address originFarmerID;
+      string originFarmName;
+      string originFarmInfo;
+      string originFarmLatitude;
+      string originFarmLongitude;
+      uint productID;
+      string productNotes;
+      uint productPrice;
+      State itemState;
+      address distributorID;
+      address retailerID;
+      address consumerID;
+  }
+
+  mapping(uint => Item) items;
+  mapping(uint => string[]) itemsHistory;
+  
+  modifier onlyOwner() {
+      require(msg.sender == owner, 'only owner can call function');
+      _;
+  }
+
+  modifier verifyCaller(address _account) {
+      require(msg.sender == _account, 'unauthorized');
+      _;
+  }
+
+  modifier paidEnough(uint _price) {
+    require(msg.value >= _price, 'amount paid must be higher than item price');
+    _;
+  }
+
+  event ItemHarvested(uint upc, uint timestamp);
+
+
+  constructor() {
+      owner = msg.sender;
+      sku = 0;
+      upc = 0;
+
+  }
+
+  function kill() public {
+      if(msg.sender == owner) {
+        selfdestruct(payable(owner));
+      }
+  }
+
+  function harvestItem(
+      address _originFarmerID, 
+      string memory _originFarmName, 
+      string memory _originFarmInfo, 
+      string memory _originFarmLatitude, 
+      string memory _originFarmLongitude, 
+      string memory _productNotes
+  )  public  onlyOwner {
+  sku += 1;
+  uint productID = upc + sku;
+  
+  items[sku] = Item({
+    sku: sku,
+    upc: sku,
+    ownerID: msg.sender,
+    originFarmerID: _originFarmerID,
+    originFarmName: _originFarmName,
+    originFarmInfo: _originFarmInfo,
+    originFarmLatitude: _originFarmLatitude,
+    originFarmLongitude: _originFarmLongitude,
+    productID: productID,
+    productNotes: _productNotes,
+    productPrice: 0,
+    itemState: State.Harvested,
+    distributorID: address(0),
+    retailerID: address(0),
+    consumerID: address(0)
+  });
+  
+  emit ItemHarvested(sku, block.timestamp);
+  }
+  
+    
+  function getTotalItems() public view returns(uint) {
+      return sku;
+  }
+  function getOwner() public view returns(address) {
+    return owner;
+  }
+
+  function getItemOwner(uint _sku) public view returns(address) {
+    return items[_sku].ownerID;
   }
 
 
-  mapping(uint => Item) items;
+  function fetchFarmDetails(uint _upc)  public view returns (
+    uint itemSKU,
+    // uint itemUPC,
+
+    address ownerID,
+    address originFarmerID,
+    string memory originFarmInfo,
+    string memory originFarmName,
+    string memory originFarmLatitude,
+    string memory originFarmLongitude
+  ){
+    return (
+      items[_upc].sku,
+      items[_upc].ownerID,
+      items[_upc].originFarmerID,
+      items[_upc].originFarmInfo,
+      items[_upc].originFarmName,
+      items[_upc].originFarmLatitude,
+      items[_upc].originFarmLongitude
+    );
+      
+  }
+    
+  function fetchProductDetails(uint _upc)  public view returns (
+    uint itemSKU,
+    uint itemUPC,
+    uint productID,
+    string memory productNotes,
+    uint productPrice,
+    string memory status,
+    address distributorID,
+    address retailerID,
+    address consumerID
+  ) {
+      itemSKU = items[_upc].sku;
+      itemUPC = items[_upc].upc;
+      productID = items[_upc].productID;
+      productNotes = items[_upc].productNotes;
+      productPrice = items[_upc].productPrice;
+      uint itemState = uint(items[_upc].itemState);
+      if(itemState == 0) {
+          status = 'Unassigned';
+      } else if(itemState == 1) {
+          status = 'Harvested';
+      } else if(itemState == 2) {
+          status = 'Processed';
+      }
+      else if(itemState == 3) {
+          status = 'Packed';
+      } else if(itemState == 4) {
+          status = 'For Sale';
+      } else if(itemState == 5) {
+          status = 'Sold';
+      } else if(itemState == 6) {
+          status = 'Shipped';
+      } else if(itemState == 7) {
+          status = 'Received';
+      } else if(itemState == 8) {
+          status = 'Purchased';
+      }
+      distributorID = items[_upc].distributorID;
+      retailerID = items[_upc].retailerID;
+      consumerID = items[_upc].consumerID;
+    }
+
+    
+    
+
+
 }
