@@ -46,8 +46,15 @@ contract SupplyChain {
   mapping(uint => Item) items;
   mapping(uint => string[]) itemsHistory;
   
+  
+  
   modifier onlyOwner() {
       require(msg.sender == owner, 'only owner can call function');
+      _;
+  }
+  
+  modifier checkSKU(uint _sku) {
+      require(_sku > 0, 'sku cannot be 0');
       _;
   }
 
@@ -56,19 +63,53 @@ contract SupplyChain {
       _;
   }
 
+  modifier harvested(uint _sku) {
+    require(items[_sku].itemState == State.Harvested, 'not in harvested state');
+    _;
+  }
+
+  modifier processed(uint _sku) {
+    require(items[_sku].itemState == State.Processed, 'not in processed state');
+    _;
+  }
+
+  modifier packed(uint _sku) {
+    require(items[_sku].itemState == State.Packed, 'not in packed state');
+    _;
+  }
+  
+  modifier forSale(uint _sku) {
+      require(items[_sku].itemState == State.ForSale, 'status: not up for sale');
+      _;
+  }
+  
+  modifier sold(uint _sku) {
+      require(items[_sku].itemState == State.Sold, 'not in sold state');
+      _;
+  }
+  
+  modifier shipped(uint _sku) {
+      require(items[_sku].itemState == State.Shipped, 'not in shipped state');
+      _;
+  }
+  
+
   modifier paidEnough(uint _price) {
     require(msg.value >= _price, 'amount paid must be higher than item price');
     _;
   }
+  
+  
+ 
 
   event ItemHarvested(uint upc, uint timestamp);
+  event ItemProcessed(uint upc, uint timestamp);
 
 
   constructor() {
       owner = msg.sender;
       sku = 0;
       upc = 0;
-
   }
 
   function kill() public {
@@ -76,53 +117,87 @@ contract SupplyChain {
         selfdestruct(payable(owner));
       }
   }
-
+  // harvest 
   function harvestItem(
-      address _originFarmerID, 
-      string memory _originFarmName, 
-      string memory _originFarmInfo, 
-      string memory _originFarmLatitude, 
-      string memory _originFarmLongitude, 
-      string memory _productNotes
+    address _originFarmerID, 
+    string memory _originFarmName, 
+    string memory _originFarmInfo, 
+    string memory _originFarmLatitude, 
+    string memory _originFarmLongitude, 
+    string memory _productNotes
   )  public  onlyOwner {
-  sku += 1;
-  uint productID = upc + sku;
+    sku += 1;
+    uint productID = upc + sku;
   
-  items[sku] = Item({
-    sku: sku,
-    upc: sku,
-    ownerID: msg.sender,
-    originFarmerID: _originFarmerID,
-    originFarmName: _originFarmName,
-    originFarmInfo: _originFarmInfo,
-    originFarmLatitude: _originFarmLatitude,
-    originFarmLongitude: _originFarmLongitude,
-    productID: productID,
-    productNotes: _productNotes,
-    productPrice: 0,
-    itemState: State.Harvested,
-    distributorID: address(0),
-    retailerID: address(0),
-    consumerID: address(0)
-  });
+    items[sku] = Item({
+      sku: sku,
+      upc: sku,
+      ownerID: msg.sender,
+      originFarmerID: _originFarmerID,
+      originFarmName: _originFarmName,
+      originFarmInfo: _originFarmInfo,
+      originFarmLatitude: _originFarmLatitude,
+      originFarmLongitude: _originFarmLongitude,
+      productID: productID,
+      productNotes: _productNotes,
+      productPrice: 0,
+      itemState: State.Harvested,
+      distributorID: address(0),
+      retailerID: address(0),
+      consumerID: address(0)
+    });
+    
   
-  emit ItemHarvested(sku, block.timestamp);
+    emit ItemHarvested(sku, block.timestamp);
+  }
+
+  // process 
+  function processItem(uint _sku) public checkSKU(_sku) harvested(_sku) {
+    items[_sku].itemState = State.Processed;
+    emit ItemProcessed(_sku, block.timestamp);
+  }
+  
+  function getItemStatus(uint _sku) public checkSKU(_sku) view returns(string memory status) {
+      uint itemStatus = uint(items[_sku].itemState);
+      if(itemStatus == 0) {
+          status = 'Unassigned';
+      } else if(itemStatus == 1) {
+          status = 'harvested';
+      } else if(itemStatus == 2) {
+          status = 'Processed';
+          
+      }  else if(itemStatus == 3) {
+          status = 'Packed';
+      }
+      else if(itemStatus == 4) {
+          status = 'For Sale';
+      } else if(itemStatus == 5) {
+          status = 'Sold';
+      } else if(itemStatus == 6) {
+          status = 'Shipped';
+      } else if(itemStatus == 7) {
+          status = 'Received';
+      } else if(itemStatus == 8) {
+          status = 'Purchased';
+      }
+      
   }
   
     
   function getTotalItems() public view returns(uint) {
-      return sku;
+    return sku;
   }
+  
   function getOwner() public view returns(address) {
     return owner;
   }
 
-  function getItemOwner(uint _sku) public view returns(address) {
+  function getItemOwner(uint _sku) checkSKU(_sku) public view returns(address) {
     return items[_sku].ownerID;
   }
 
 
-  function fetchFarmDetails(uint _upc)  public view returns (
+  function fetchFarmDetails(uint _upc) public view returns (
     uint itemSKU,
     // uint itemUPC,
 
@@ -144,8 +219,10 @@ contract SupplyChain {
     );
       
   }
+  
+  
     
-  function fetchProductDetails(uint _upc)  public view returns (
+  function fetchProductDetails(uint _upc)  public checkSKU(_upc) view returns (
     uint itemSKU,
     uint itemUPC,
     uint productID,

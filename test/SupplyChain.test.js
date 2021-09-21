@@ -89,7 +89,43 @@ contract('Supply Chain', async accountsPayload => {
       assert.equal(harvestProductNotes, productNotes)
       assert.equal(status, 'Harvested')
     })
+
+    it('Allows owner to process farm produce to product', async () => {
+      const sku = 1
+      await supplyChain.processItem(sku, { from: deployer })
+
+
+      const processedItem = await supplyChain.fetchFarmDetails(sku)
+      const { 
+        itemSKU, 
+        ownerID: harvestOwnerID, 
+        originFarmerID: harvestOriginFarmerID, 
+        originFarmName: harvestOriginFarmName,
+        originFarmInfo: harvestOriginFarmInfo,
+        originFarmLatitude: harvestOriginFarmLatitude,
+        originFarmLongitude: harvestOriginFarmLongitude
+      } = processedItem
+
+      const harvestProductDetails = await supplyChain.fetchProductDetails(sku)
+      const { itemUPC, productNotes: harvestProductNotes, status } = harvestProductDetails
+
+    
+      // farm 
+      assert.equal(itemSKU, sku)
+      assert.equal(harvestOwnerID, deployer)
+      assert.equal(harvestOriginFarmName, originFarmName)
+      assert.equal(harvestOriginFarmInfo, originFarmInfo)
+      assert.equal(harvestOriginFarmLatitude, originFarmLatitude)
+      assert.equal(harvestOriginFarmLongitude, originFarmLongitude)
+
+      // product
+      assert.equal(itemUPC, sku)
+      assert.equal(harvestProductNotes, productNotes)
+      assert.equal(status, 'Processed')
+    })
   })
+
+  
 
   
 })
