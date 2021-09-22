@@ -12,7 +12,7 @@ contract FarmerRole {
   event FarmerRemoved(address indexed account);
 
   modifier onlyFarmer() {
-    require(isFarmer(msg.sender));
+    require(isFarmer(msg.sender), 'only farmer can call function');
     _;
   }
 
@@ -30,7 +30,7 @@ contract FarmerRole {
     emit FarmerAdded(_account);
   }
 
-  function addFarmer(address _account) public onlyFarmer {
+  function addFarmer(address _account) external onlyFarmer {
     _addFarmer(_account);
   }
 
@@ -39,9 +39,7 @@ contract FarmerRole {
     emit FarmerRemoved(_account);
   }
 
-
-
-  function removeFarmer(address _account) public onlyFarmer {
+  function removeFarmer(address _account) external onlyFarmer {
     _revokeFarmer(_account);
 
   }

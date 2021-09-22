@@ -2,9 +2,17 @@
 
 pragma solidity >=0.5.0 <0.9.0;
 
-contract SupplyChain {
+import '../AccessControl/FarmerRole.sol';
+import '../AccessControl/DistributorRole.sol';
+import '../AccessControl/RetailerRole.sol';
+import '../AccessControl/ConsumerRole.sol';
 
-  address owner;
+import '../Core/Ownable.sol';
+
+
+contract SupplyChain is FarmerRole, DistributorRole, RetailerRole, ConsumerRole, Ownable {
+
+  address deployer;
   uint upc;
   uint sku;
 
@@ -48,14 +56,14 @@ contract SupplyChain {
   
   
   
-  modifier onlyOwner() {
-      require(msg.sender == owner, 'only owner can call function');
-      _;
+  modifier onlyOwner() override {
+    require(msg.sender == deployer , 'only owner can call function');
+    _;
   }
   
   modifier checkSKU(uint _sku) {
-      require(_sku > 0, 'sku cannot be 0');
-      _;
+    require(_sku > 0, 'sku cannot be 0');
+    _;
   }
 
   modifier verifyCaller(address _account) {
@@ -104,17 +112,18 @@ contract SupplyChain {
 
   event ItemHarvested(uint upc, uint timestamp);
   event ItemProcessed(uint upc, uint timestamp);
+  event ItemPacked(uint upc, uint timestamp);
 
 
   constructor() {
-      owner = msg.sender;
+      deployer = msg.sender;
       sku = 0;
       upc = 0;
   }
 
   function kill() public {
-      if(msg.sender == owner) {
-        selfdestruct(payable(owner));
+      if(msg.sender == deployer) {
+        selfdestruct(payable(deployer));
       }
   }
   // harvest 
@@ -125,7 +134,7 @@ contract SupplyChain {
     string memory _originFarmLatitude, 
     string memory _originFarmLongitude, 
     string memory _productNotes
-  )  public  onlyOwner {
+  )  public  onlyFarmer {
     sku += 1;
     uint productID = upc + sku;
   
@@ -152,9 +161,16 @@ contract SupplyChain {
   }
 
   // process 
-  function processItem(uint _sku) public checkSKU(_sku) harvested(_sku) {
+  function processItem(uint _sku) public checkSKU(_sku) harvested(_sku) onlyFarmer {
     items[_sku].itemState = State.Processed;
     emit ItemProcessed(_sku, block.timestamp);
+  }
+
+  // pack
+  function packItem(uint _sku) public checkSKU(_sku) processed(_sku) onlyFarmer {
+    items[_sku].itemState = State.Packed;
+    emit ItemPacked(_sku, block.timestamp);
+      
   }
   
   function getItemStatus(uint _sku) public checkSKU(_sku) view returns(string memory status) {
@@ -189,7 +205,7 @@ contract SupplyChain {
   }
   
   function getOwner() public view returns(address) {
-    return owner;
+    return deployer;
   }
 
   function getItemOwner(uint _sku) checkSKU(_sku) public view returns(address) {

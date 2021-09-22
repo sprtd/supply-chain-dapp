@@ -1,3 +1,4 @@
+require('dotenv').config({ path: './config/config.env'})
 
 
 // const HDWalletProvider = require('@truffle/hdwallet-provider');

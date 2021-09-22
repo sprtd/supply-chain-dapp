@@ -1,12 +1,13 @@
+
 const SupplyChain = artifacts.require('SupplyChain')
-let supplyChain, accounts, deployer, addr1, addr2, addr3
+let supplyChain, accounts, deployer, farmer, distributor, retailer, consumer, randomAccount
 
 // harvest parameters
 let originFarmerID
 let originFarmName = 'Alpha Farm 1'
 let originFarmInfo = 'Mechanized Apple Farming'
-let originFarmLatitude = '9.059530059530'
-let originFarmLongitude = '7.469260'
+let originFarmLatitude = process.env.LATITUDE
+let originFarmLongitude = process.env.LONGITUDE
 let productNotes = 'Large-scale harvest'
 
 // conversion helpers
@@ -17,10 +18,14 @@ const fromWei = payload => web3.utils.fromWei(payload, 'ether')
 contract('Supply Chain', async accountsPayload => {
   accounts = accountsPayload
   deployer = accounts[0]
-  addr1 = accounts[1]
-  addr2 = accounts[2]
-  addr3 = accounts[3]
+  farmer = accounts[1]
+  distributor = accounts[2]
+  retailer = accounts[3]
+  consumer = accounts[4]
+  randomAccount = accounts[5]
+  
   originFarmerID = deployer
+
 
   before(async() => {
     supplyChain = await SupplyChain.deployed()
@@ -36,18 +41,18 @@ contract('Supply Chain', async accountsPayload => {
     })
   })
 
-  contract('Revert Non-Owner', () => {
+  contract('Revert Non-Farmer', () => {
     // harvest parameters
     let ownerID = deployer
     let originFarmerID = deployer
-    let originFarmerID2 = addr1
+    let originFarmerID2 = farmer
    
     
-    it('Disallows non-owner attempt to harvest farm produce', async() => {
-      const REVERT  = 'Returned error: VM Exception while processing transaction: revert only owner can call function'
+    it('Disallows non-farmer attempt to harvest farm produce', async() => {
+      const REVERT  = 'Returned error: VM Exception while processing transaction: revert only farmer can call function'
       try {
         await supplyChain
-          .harvestItem(originFarmerID, originFarmName, originFarmInfo, originFarmLatitude, originFarmLongitude, productNotes, { from: addr1 })
+          .harvestItem(originFarmerID, originFarmName, originFarmInfo, originFarmLatitude, originFarmLongitude, productNotes, { from: distributor })
         throw null
         
       } catch(err) {
@@ -56,11 +61,20 @@ contract('Supply Chain', async accountsPayload => {
     })
   })
 
-  contract('Harvest Farm Produce', () => {
-    it('Allows owner harvest farm produce', async () => {
+  contract('Supply Chain Phases', () => {
+    it('Allows farmer to harvest farm produce', async () => {
       const sku = 1
+      await supplyChain.addFarmer(farmer)
+
+      
+      // event
+      let eventEmitted = false
+      await supplyChain.ItemHarvested((err, res) => {
+        eventEmitted = true
+      })
+     
       await supplyChain
-        .harvestItem(originFarmerID, originFarmName, originFarmInfo, originFarmLatitude, originFarmLongitude, productNotes, { from: deployer})
+        .harvestItem(originFarmerID, originFarmName, originFarmInfo, originFarmLatitude, originFarmLongitude, productNotes, {from: farmer})
       const harvestFarmDetails = await supplyChain.fetchFarmDetails(sku)
       const { 
         itemSKU, 
@@ -78,7 +92,7 @@ contract('Supply Chain', async accountsPayload => {
     
       // farm 
       assert.equal(itemSKU, sku)
-      assert.equal(harvestOwnerID, deployer)
+      assert.equal(harvestOwnerID, farmer)
       assert.equal(harvestOriginFarmName, originFarmName)
       assert.equal(harvestOriginFarmInfo, originFarmInfo)
       assert.equal(harvestOriginFarmLatitude, originFarmLatitude)
@@ -88,40 +102,38 @@ contract('Supply Chain', async accountsPayload => {
       assert.equal(itemUPC, sku)
       assert.equal(harvestProductNotes, productNotes)
       assert.equal(status, 'Harvested')
+      assert.equal(eventEmitted, true, 'Error: ItemHarvested event not emitted')
     })
 
-    it('Allows owner to process farm produce to product', async () => {
+    it('Allows farmer to process farm produce to product', async () => {
+
+      // event
+      let eventEmitted = false
+      await supplyChain.ItemPacked((err, res) => eventEmitted = true)
+
+
       const sku = 1
-      await supplyChain.processItem(sku, { from: deployer })
-
-
-      const processedItem = await supplyChain.fetchFarmDetails(sku)
-      const { 
-        itemSKU, 
-        ownerID: harvestOwnerID, 
-        originFarmerID: harvestOriginFarmerID, 
-        originFarmName: harvestOriginFarmName,
-        originFarmInfo: harvestOriginFarmInfo,
-        originFarmLatitude: harvestOriginFarmLatitude,
-        originFarmLongitude: harvestOriginFarmLongitude
-      } = processedItem
-
+      await supplyChain.processItem(sku, { from: farmer })
       const harvestProductDetails = await supplyChain.fetchProductDetails(sku)
-      const { itemUPC, productNotes: harvestProductNotes, status } = harvestProductDetails
-
-    
-      // farm 
-      assert.equal(itemSKU, sku)
-      assert.equal(harvestOwnerID, deployer)
-      assert.equal(harvestOriginFarmName, originFarmName)
-      assert.equal(harvestOriginFarmInfo, originFarmInfo)
-      assert.equal(harvestOriginFarmLatitude, originFarmLatitude)
-      assert.equal(harvestOriginFarmLongitude, originFarmLongitude)
+      const { status } = harvestProductDetails
 
       // product
-      assert.equal(itemUPC, sku)
-      assert.equal(harvestProductNotes, productNotes)
       assert.equal(status, 'Processed')
+      assert.equal(eventEmitted, true, 'Error: ItemProcessed event not emitted')
+    })
+
+    // pack item
+    it('Allows farmer to pack product', async () => {
+      let eventEmitted = false
+      await supplyChain.ItemPacked((err, res) => eventEmitted = true)
+      const sku = 1
+      await supplyChain.packItem(sku, { from: farmer })
+      
+      const harvestProductDetails = await supplyChain.fetchProductDetails(sku)
+      const { status } = harvestProductDetails
+
+      // product
+      assert.equal(status, 'Packed')
     })
   })
 
