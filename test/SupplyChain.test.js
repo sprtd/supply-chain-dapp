@@ -13,6 +13,8 @@ let productNotes = 'Large-scale harvest'
 // conversion helpers
 const toWei = payload => web3.utils.toWei(payload.toString(), 'ether')
 const fromWei = payload => web3.utils.fromWei(payload.toString(), 'ether')
+const ETHBalance = payload => web3.eth.getBalance(payload)
+
 
 
 contract('Supply Chain', async accountsPayload => {
@@ -52,7 +54,7 @@ contract('Supply Chain', async accountsPayload => {
       const REVERT  = 'Returned error: VM Exception while processing transaction: revert only farmer can call function'
       try {
         await supplyChain
-          .harvestItem(originFarmerID, originFarmName, originFarmInfo, originFarmLatitude, originFarmLongitude, productNotes, { from: distributor })
+          .harvestItem(originFarmName, originFarmInfo, originFarmLatitude, originFarmLongitude, productNotes, { from: distributor })
         throw null
         
       } catch(err) {
@@ -78,7 +80,7 @@ contract('Supply Chain', async accountsPayload => {
       })
      
       await supplyChain
-        .harvestItem(farmer, originFarmName, originFarmInfo, originFarmLatitude, originFarmLongitude, productNotes,  {from: farmer})
+        .harvestItem(originFarmName, originFarmInfo, originFarmLatitude, originFarmLongitude, productNotes,  {from: farmer})
       const harvestFarmDetails = await supplyChain.fetchFarmDetails.call(sku)
       const { 
         itemSKU, 
@@ -152,11 +154,43 @@ contract('Supply Chain', async accountsPayload => {
       
       const harvestProductDetails = await supplyChain.fetchProductDetails(sku)
     
-
       const { status, productPrice } = harvestProductDetails
       assert.equal(status, 'For Sale')
       assert.equal(fromWei(productPrice), 1 )
       assert.equal(eventEmitted, true, 'Error: ItemPutUpForSale not emitted')
+    })
+
+    it('Allows distributor buy item', async() => {
+      let eventEmitted = false
+      await supplyChain.ItemSold((err, res) => eventEmitted = true)
+      
+      const sku = 1
+      const payAmount = toWei(1)
+      const farmerETHBalBefore = await web3.eth.getBalance(farmer) // farmer's ETH balance before sale
+
+      await supplyChain.enableDistributor(distributor, {from: deployer})
+
+      
+      
+      await supplyChain.buyItem(sku, {from: distributor, value: payAmount})
+      
+      const harvestFarmDetails = await supplyChain.fetchFarmDetails(sku)
+      const harvestProductDetails = await supplyChain.fetchProductDetails(sku)
+      const { ownerID } = harvestFarmDetails
+      const { status } = harvestProductDetails
+
+      const farmerETHBalAfter = await web3.eth.getBalance(farmer) // farmer ETH balance after sale
+      
+      console.log('owner balance after buy', fromWei(farmerETHBalAfter))
+    
+      const ethDiff = farmerETHBalAfter - farmerETHBalBefore
+      console.log('eth diff', fromWei(ethDiff.toString()))
+
+      assert.equal(fromWei(payAmount), fromWei(ethDiff.toString())) // difference between farmer's initial ETH balance and farmer's final ETH balance equals amount paid by distributor
+
+      assert.equal(status, 'Sold') // item status is marked as sold
+      assert.equal(ownerID, distributor)  // distributor is the new owner
+      assert.equal(eventEmitted, true, 'Error: ItemSold not emitted') // event emitted
     })
   })
 
