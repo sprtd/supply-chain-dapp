@@ -12,7 +12,7 @@ let productNotes = 'Large-scale harvest'
 
 // conversion helpers
 const toWei = payload => web3.utils.toWei(payload.toString(), 'ether')
-const fromWei = payload => web3.utils.fromWei(payload, 'ether')
+const fromWei = payload => web3.utils.fromWei(payload.toString(), 'ether')
 
 
 contract('Supply Chain', async accountsPayload => {
@@ -24,7 +24,7 @@ contract('Supply Chain', async accountsPayload => {
   consumer = accounts[4]
   randomAccount = accounts[5]
   
-  originFarmerID = deployer
+  originFarmerID = farmer
 
 
   before(async() => {
@@ -64,8 +64,12 @@ contract('Supply Chain', async accountsPayload => {
   contract('Supply Chain Phases', () => {
     it('Allows farmer to harvest farm produce', async () => {
       const sku = 1
-      await supplyChain.addFarmer(farmer)
 
+      // transfer ownership to farmer
+      await supplyChain.transferOwnershipToAccount(farmer, {from: deployer})
+
+      // add farmer address as farmerID
+      await supplyChain.addFarmer(farmer, {from: deployer})
       
       // event
       let eventEmitted = false
@@ -74,8 +78,8 @@ contract('Supply Chain', async accountsPayload => {
       })
      
       await supplyChain
-        .harvestItem(originFarmerID, originFarmName, originFarmInfo, originFarmLatitude, originFarmLongitude, productNotes, {from: farmer})
-      const harvestFarmDetails = await supplyChain.fetchFarmDetails(sku)
+        .harvestItem(farmer, originFarmName, originFarmInfo, originFarmLatitude, originFarmLongitude, productNotes,  {from: farmer})
+      const harvestFarmDetails = await supplyChain.fetchFarmDetails.call(sku)
       const { 
         itemSKU, 
         ownerID: harvestOwnerID, 
@@ -86,13 +90,14 @@ contract('Supply Chain', async accountsPayload => {
         originFarmLongitude: harvestOriginFarmLongitude
       } = harvestFarmDetails
 
-      const harvestProductDetails = await supplyChain.fetchProductDetails(sku)
+      const harvestProductDetails = await supplyChain.fetchProductDetails.call(sku)
       const { itemUPC, productNotes: harvestProductNotes, status } = harvestProductDetails
 
     
       // farm 
       assert.equal(itemSKU, sku)
       assert.equal(harvestOwnerID, farmer)
+      assert.equal(harvestOriginFarmerID, farmer)
       assert.equal(harvestOriginFarmName, originFarmName)
       assert.equal(harvestOriginFarmInfo, originFarmInfo)
       assert.equal(harvestOriginFarmLatitude, originFarmLatitude)
@@ -113,7 +118,7 @@ contract('Supply Chain', async accountsPayload => {
 
 
       const sku = 1
-      await supplyChain.processItem(sku, { from: farmer })
+      await supplyChain.processItem(sku, {from: farmer})
       const harvestProductDetails = await supplyChain.fetchProductDetails(sku)
       const { status } = harvestProductDetails
 
@@ -127,13 +132,31 @@ contract('Supply Chain', async accountsPayload => {
       let eventEmitted = false
       await supplyChain.ItemPacked((err, res) => eventEmitted = true)
       const sku = 1
-      await supplyChain.packItem(sku, { from: farmer })
+      await supplyChain.packItem(sku, {from: farmer})
       
       const harvestProductDetails = await supplyChain.fetchProductDetails(sku)
       const { status } = harvestProductDetails
-
+      
       // product
       assert.equal(status, 'Packed')
+    })
+    
+    it('Allows farmer put up processed product for sale', async() => {
+
+      let eventEmitted = false
+      await supplyChain.ItemPutUpForSale((err, res) => eventEmitted = true)
+
+      const sku = 1
+      const itemPrice = toWei(1)
+      await supplyChain.putUpItemForSale(sku, itemPrice, {from: farmer})
+      
+      const harvestProductDetails = await supplyChain.fetchProductDetails(sku)
+    
+
+      const { status, productPrice } = harvestProductDetails
+      assert.equal(status, 'For Sale')
+      assert.equal(fromWei(productPrice), 1 )
+      assert.equal(eventEmitted, true, 'Error: ItemPutUpForSale not emitted')
     })
   })
 

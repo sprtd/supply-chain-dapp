@@ -4,20 +4,16 @@ pragma solidity >=0.5.0 <0.9.0;
 
 contract Ownable {
   address private origOwner;
-
   event TransferOwnership(address indexed oldOwner, address indexed newOwner);
 
-  modifier onlyOwner() virtual {
-    require(isOwner());
-    _;
-  }
+  
   constructor() {
     origOwner = msg.sender;
     emit TransferOwnership(address(0), origOwner);
 
   }
 
-  function fetchOwner() public view returns(address) {
+  function ownerAccount() public view returns(address) {
     return origOwner;
 
   }
@@ -25,7 +21,12 @@ contract Ownable {
   function isOwner() public view returns(bool) {
     return msg.sender == origOwner;
   }
-
+  
+  modifier onlyOwner() {
+    require(isOwner(), 'only owner can call function');
+    _;
+  }
+  
 
   function _transferOwnership(address newOwner_) internal {
     require(newOwner_ != address(0), 'cannot transfer to addr 0');
@@ -34,7 +35,7 @@ contract Ownable {
   }
 
 
-  function transferOwnership(address _newOwner) public {
+  function transferOwnership(address _newOwner) public onlyOwner {
     _transferOwnership(_newOwner);
   }
 
