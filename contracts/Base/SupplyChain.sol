@@ -111,9 +111,18 @@ contract SupplyChain is FarmerRole, DistributorRole, RetailerRole, ConsumerRole,
   }
   
   modifier shipped(uint _sku) {
-      require(items[_sku].itemState == State.Shipped, 'not in shipped state');
-      _;
+    require(items[_sku].itemState == State.Shipped, 'not in shipped state');
+    _;
   }
+
+   modifier received(uint _sku) {
+    require(items[_sku].itemState == State.Received, 'not in received state');
+    _;
+  }
+  
+
+
+
   
 
 
@@ -124,6 +133,7 @@ contract SupplyChain is FarmerRole, DistributorRole, RetailerRole, ConsumerRole,
   event ItemSold(uint sku, uint timestamp);
   event ItemShipped(uint sku, uint timestamp);
   event ItemReceived(uint sku, uint timestamp);
+  event ItemPurchased(uint sku, uint timestamp);
 
 
   constructor() {
@@ -167,6 +177,11 @@ contract SupplyChain is FarmerRole, DistributorRole, RetailerRole, ConsumerRole,
     items[_sku].retailerID = _account;
   }
 
+  
+  function enableConsumerAccount(uint _sku, address _account) public onlyRetailer checkSKU(_sku) notZeroAddress(_account) {
+    enableConsumer(_account);
+    items[_sku].consumerID = _account;
+  }
 
   // transfer ownership to retailer
   function transferOwnershipToRetailer(uint _sku, address _account)  public notZeroAddress(_account) onlyDistributor {
@@ -174,6 +189,14 @@ contract SupplyChain is FarmerRole, DistributorRole, RetailerRole, ConsumerRole,
     require(_account == retailer, 'must be an existing retailer');
     owner = retailer;
     items[_sku].ownerID = retailer;
+  }
+
+   function transferOwnershipToConsumer(uint _sku, address _account) public notZeroAddress(_account) {
+      address consumer = items[_sku].consumerID;
+      require(_account == consumer, 'must be an existing consumer');
+      owner = consumer;
+      items[_sku].ownerID = consumer;
+      
   }
   
   
@@ -256,6 +279,15 @@ contract SupplyChain is FarmerRole, DistributorRole, RetailerRole, ConsumerRole,
     emit ItemReceived(_sku, block.timestamp);
       
   }
+
+  function purchaseItem(uint _sku)  public  received(_sku)   onlyConsumer {
+    //   address consumer = items[_sku].retailerID;
+  
+    items[_sku].itemState = State.Purchased;
+    transferOwnershipToConsumer(_sku, msg.sender);
+    emit ItemPurchased(_sku, block.timestamp);
+  }
+  
       
     
   
