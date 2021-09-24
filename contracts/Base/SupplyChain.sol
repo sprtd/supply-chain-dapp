@@ -123,6 +123,7 @@ contract SupplyChain is FarmerRole, DistributorRole, RetailerRole, ConsumerRole,
   event ItemPutUpForSale(uint sku, uint timestamp);
   event ItemSold(uint sku, uint timestamp);
   event ItemShipped(uint sku, uint timestamp);
+  event ItemReceived(uint sku, uint timestamp);
 
 
   constructor() {
@@ -250,6 +251,12 @@ contract SupplyChain is FarmerRole, DistributorRole, RetailerRole, ConsumerRole,
     emit ItemShipped(_sku, block.timestamp);
   }
   
+  function receiveItem(uint _sku) public shipped(_sku) onlyRetailer {
+    items[_sku].itemState = State.Received;
+    emit ItemReceived(_sku, block.timestamp);
+      
+  }
+      
     
   
   function getItemStatus(uint _sku) public checkSKU(_sku) view returns(string memory status) {

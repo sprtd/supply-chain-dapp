@@ -207,13 +207,32 @@ contract('Supply Chain', async accountsPayload => {
       const { ownerID } = farmDetails
       const { status } = productDetails
 
-      assert.equal(status, 'Shipped') // item status is marked as sold
+      assert.equal(status, 'Shipped') // item status is marked as shipped
       assert.equal(ownerID, retailer)  // distributor is the new owner
       assert.equal(eventEmitted, true, 'Error: ItemSold not emitted') // event emitted
 
 
 
     })
+
+    it('Enables retailer mark item as received', async() => {
+      let eventEmitted = false
+      
+      const sku = 1
+      
+      await supplyChain.receiveItem(sku, {from: retailer})
+      await supplyChain.ItemReceived((err, res) => eventEmitted = true)
+      const productDetails = await supplyChain.fetchProductDetails(sku)
+
+      const { status } = productDetails
+
+      assert.equal(status, 'Received') // item status is marked as received
+      assert.equal(eventEmitted, true, 'Error: ItemSold not emitted') // event emitted
+
+
+    })
+
+
   })
 
   
