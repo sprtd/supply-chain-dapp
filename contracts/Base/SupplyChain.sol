@@ -122,42 +122,60 @@ contract SupplyChain is FarmerRole, DistributorRole, RetailerRole, ConsumerRole,
   event ItemPacked(uint sku, uint timestamp);
   event ItemPutUpForSale(uint sku, uint timestamp);
   event ItemSold(uint sku, uint timestamp);
+  event ItemShipped(uint sku, uint timestamp);
 
 
   constructor() {
-      deployer = msg.sender;
-      owner = msg.sender;
-      sku = 0;
-      upc = 0;
+    deployer = msg.sender;
+    owner = msg.sender;
+    sku = 0;
+    upc = 0;
   }
 
   function kill() public {
-     if(msg.sender == owner) {
-        selfdestruct(payable(owner));
-     }
+    if(msg.sender == owner) {
+      selfdestruct(payable(owner));
+    }
   }
   
   
   function addFarmerAccount(uint _sku, address _account) public onlyOwner checkSKU(_sku) notZeroAddress(_account) {
-      _addFarmer(_account);
-      items[_sku].ownerID = _account;
-      transferOwnershipToAccount(_account);
+    _addFarmer(_account);
+    items[_sku].ownerID = _account;
+    transferOwnershipToAccount(_account);
       
   }
   
   
   
   function transferOwnershipToAccount(address _account) public onlyOwner notZeroAddress(_account) {
-      owner = _account;
-      transferOwnership(_account);
+    owner = _account;
+    transferOwnership(_account);
   }
   
   function transferOwnershipToDistributor(uint _sku, address _account) notZeroAddress(_account) public {
-      address distributor = items[_sku].distributorID;
-      require(_account == distributor, 'must be distributor already');
-      owner = distributor;
+    address distributor = items[_sku].distributorID;
+    require(_account == distributor, 'must be distributor already');
+    owner = distributor;
       
   }
+
+  // enable retailser
+  function enableRetailerAccount(uint _sku, address _account) public onlyDistributor checkSKU(_sku) notZeroAddress(_account)  {
+    enableRetailer(_account);
+    items[_sku].retailerID = _account;
+  }
+
+
+  // transfer ownership to retailer
+  function transferOwnershipToRetailer(uint _sku, address _account)  public notZeroAddress(_account) onlyDistributor {
+    address retailer = items[_sku].retailerID;
+    require(_account == retailer, 'must be an existing retailer');
+    owner = retailer;
+    items[_sku].ownerID = retailer;
+  }
+  
+  
   
   
   
@@ -211,47 +229,53 @@ contract SupplyChain is FarmerRole, DistributorRole, RetailerRole, ConsumerRole,
     emit ItemPutUpForSale(_sku, block.timestamp);
   }
   
-    function buyItem(uint _sku) public payable forSale(_sku) paidEnough(items[_sku].productPrice) checkValue(_sku) onlyDistributor {
-        address distributor = msg.sender;
-        items[_sku].distributorID = distributor;
-        address farmer = items[_sku].originFarmerID;
-        uint price = items[_sku].productPrice;
-        items[_sku].itemState = State.Sold;
-        (bool succes, ) = payable(farmer).call{value: price}('');
-        require(succes, 'failed to send ether to farmer');
-        items[_sku].ownerID = distributor;
-        transferOwnershipToDistributor(_sku, distributor);
-        emit ItemSold(_sku, block.timestamp);
-        
-    
-    }
-    
+  function buyItem(uint _sku) public payable forSale(_sku) paidEnough(items[_sku].productPrice) checkValue(_sku) onlyDistributor {
+    address distributor = msg.sender;
+    items[_sku].distributorID = distributor;
+    address farmer = items[_sku].originFarmerID;
+    uint price = items[_sku].productPrice;
+    items[_sku].itemState = State.Sold;
+    (bool succes, ) = payable(farmer).call{value: price}('');
+    require(succes, 'failed to send ether to farmer');
+    items[_sku].ownerID = distributor;
+    transferOwnershipToDistributor(_sku, distributor);
+    emit ItemSold(_sku, block.timestamp);
+  }
+
+  function shipItem(uint _sku) public sold(_sku)  onlyDistributor {
+      
+    address retailer = items[_sku].retailerID;
+    items[_sku].itemState = State.Shipped;
+    transferOwnershipToRetailer(_sku, retailer);
+    emit ItemShipped(_sku, block.timestamp);
+  }
+  
     
   
   function getItemStatus(uint _sku) public checkSKU(_sku) view returns(string memory status) {
-      uint itemStatus = uint(items[_sku].itemState);
-      if(itemStatus == 0) {
-          status = 'Unassigned';
-      } else if(itemStatus == 1) {
-          status = 'harvested';
-      } else if(itemStatus == 2) {
-          status = 'Processed';
-          
-      }  else if(itemStatus == 3) {
-          status = 'Packed';
-      }
-      else if(itemStatus == 4) {
-          status = 'For Sale';
-      } else if(itemStatus == 5) {
-          status = 'Sold';
-      } else if(itemStatus == 6) {
-          status = 'Shipped';
-      } else if(itemStatus == 7) {
-          status = 'Received';
-      } else if(itemStatus == 8) {
-          status = 'Purchased';
-      }
-      
+    uint itemStatus = uint(items[_sku].itemState);
+    if(itemStatus == 0) {
+        status = 'Unassigned';
+    } else if(itemStatus == 1) {
+        status = 'harvested';
+    } else if(itemStatus == 2) {
+        status = 'Processed';
+        
+    }  else if(itemStatus == 3) {
+        status = 'Packed';
+    }
+    else if(itemStatus == 4) {
+        status = 'For Sale';
+    } else if(itemStatus == 5) {
+        status = 'Sold';
+    } else if(itemStatus == 6) {
+        status = 'Shipped';
+    } else if(itemStatus == 7) {
+        status = 'Received';
+    } else if(itemStatus == 8) {
+        status = 'Purchased';
+    }
+    
   }
   
     
@@ -303,7 +327,7 @@ contract SupplyChain is FarmerRole, DistributorRole, RetailerRole, ConsumerRole,
     address distributorID,
     address retailerID,
     address consumerID
-  ) {
+    ) {
       itemSKU = items[_upc].sku;
       itemUPC = items[_upc].upc;
       productID = items[_upc].productID;
@@ -333,7 +357,7 @@ contract SupplyChain is FarmerRole, DistributorRole, RetailerRole, ConsumerRole,
       distributorID = items[_upc].distributorID;
       retailerID = items[_upc].retailerID;
       consumerID = items[_upc].consumerID;
-    }
+  }
 
     
     

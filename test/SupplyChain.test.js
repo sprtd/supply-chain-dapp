@@ -160,7 +160,7 @@ contract('Supply Chain', async accountsPayload => {
       assert.equal(eventEmitted, true, 'Error: ItemPutUpForSale not emitted')
     })
 
-    it('Allows distributor buy item', async() => {
+    it('Transfers item ownership to distributor after buying item', async() => {
       let eventEmitted = false
       await supplyChain.ItemSold((err, res) => eventEmitted = true)
       
@@ -191,6 +191,28 @@ contract('Supply Chain', async accountsPayload => {
       assert.equal(status, 'Sold') // item status is marked as sold
       assert.equal(ownerID, distributor)  // distributor is the new owner
       assert.equal(eventEmitted, true, 'Error: ItemSold not emitted') // event emitted
+    })
+
+    it('Ships and transfers ownership of item from distributor to retailer', async() => {
+      let eventEmitted = false 
+      await supplyChain.ItemShipped((err, res) => eventEmitted = true)
+
+      const sku = 1
+      await supplyChain.enableRetailerAccount(sku, retailer, {from: deployer})
+      
+      await supplyChain.shipItem(sku, {from: distributor})
+      const farmDetails = await supplyChain.fetchFarmDetails(sku)
+      const productDetails = await supplyChain.fetchProductDetails(sku)
+
+      const { ownerID } = farmDetails
+      const { status } = productDetails
+
+      assert.equal(status, 'Shipped') // item status is marked as sold
+      assert.equal(ownerID, retailer)  // distributor is the new owner
+      assert.equal(eventEmitted, true, 'Error: ItemSold not emitted') // event emitted
+
+
+
     })
   })
 
