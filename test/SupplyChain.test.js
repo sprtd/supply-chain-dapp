@@ -143,7 +143,7 @@ contract('Supply Chain', async accountsPayload => {
       assert.equal(status, 'Packed')
     })
     
-    it('Allows farmer put up processed product for sale', async() => {
+    it('Allows farmer put up processed item up for sale', async() => {
 
       let eventEmitted = false
       await supplyChain.ItemPutUpForSale((err, res) => eventEmitted = true)

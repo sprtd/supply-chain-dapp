@@ -119,12 +119,6 @@ contract SupplyChain is FarmerRole, DistributorRole, RetailerRole, ConsumerRole,
     require(items[_sku].itemState == State.Received, 'not in received state');
     _;
   }
-  
-
-
-
-  
-
 
   event ItemHarvested(uint sku, uint timestamp);
   event ItemProcessed(uint sku, uint timestamp);
@@ -281,7 +275,6 @@ contract SupplyChain is FarmerRole, DistributorRole, RetailerRole, ConsumerRole,
   }
 
   function purchaseItem(uint _sku)  public  received(_sku)   onlyConsumer {
-    //   address consumer = items[_sku].retailerID;
   
     items[_sku].itemState = State.Purchased;
     transferOwnershipToConsumer(_sku, msg.sender);
@@ -397,9 +390,4 @@ contract SupplyChain is FarmerRole, DistributorRole, RetailerRole, ConsumerRole,
       retailerID = items[_upc].retailerID;
       consumerID = items[_upc].consumerID;
   }
-
-    
-    
-
-
 }
