@@ -242,19 +242,18 @@ contract('Supply Chain', async accountsPayload => {
       const farmDetails = await supplyChain.fetchFarmDetails(sku)
       const productDetails = await supplyChain.fetchProductDetails(sku)
 
-
       const { ownerID } = farmDetails
       const { status } = productDetails
 
-      
-
-
+  
       assert.equal(ownerID, consumer)
       assert.equal(status, 'Purchased') // item status is marked as received
       assert.equal(eventEmitted, true, 'Error: ItemPurchased not emitted') 
 
       
     })
+
+    it('')
 
 
   })

@@ -1,5 +1,6 @@
 require('dotenv').config({ path: './config/config.env'})
 
+const path = require('path')
 
 // const HDWalletProvider = require('@truffle/hdwallet-provider');
 //
@@ -16,7 +17,7 @@ module.exports = {
    *
    * $ truffle test --network <network-name>
    */
-
+  contracts_build_directory: path.join(__dirname, '/client/src/abi'),
   networks: {
     // Useful for testing. The `development` name is special - truffle uses it by default
     // if it's defined here and no other network is specified at the command line.
