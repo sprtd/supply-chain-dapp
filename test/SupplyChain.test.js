@@ -86,7 +86,7 @@ contract('Supply Chain', async accountsPayload => {
         itemSKU, 
         ownerID: fetchedOwner, 
         originFarmerID: fetchedFarmer, 
-        originFarmName: fetchedFatmName,
+        originFarmName: fetchedFarmName,
         originFarmInfo: fetchedFarmInfo,
         originFarmLatitude: fetchedFarmLatitude,
         originFarmLongitude: fetchedFarmLongitude
@@ -100,7 +100,7 @@ contract('Supply Chain', async accountsPayload => {
       assert.equal(itemSKU, sku)
       assert.equal(fetchedOwner, farmer)
       assert.equal(fetchedFarmer, farmer)
-      assert.equal(fetchedFatmName, originFarmName)
+      assert.equal(fetchedFarmName, originFarmName)
       assert.equal(fetchedFarmInfo, originFarmInfo)
       assert.equal(fetchedFarmLatitude, originFarmLatitude)
       assert.equal(fetchedFarmLongitude, originFarmLongitude)

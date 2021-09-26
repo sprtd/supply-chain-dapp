@@ -38,6 +38,8 @@ const DappContentWrapper = styled.div`
 const InputWrapper = styled.div`
   display: flex;
   flex-direction: column;
+  justify-content: flex-start;
+  width: 200px;
   
   box-sizing: border-box;
 
@@ -52,6 +54,7 @@ const InputWrapper = styled.div`
   }
   
   button {
+    width: 100%;
     border-radius: 5px;
     padding: 10px 10px;
     cursor: pointer;
@@ -62,6 +65,7 @@ const InputWrapper = styled.div`
   }
 
 `
+
 
 
 
@@ -106,4 +110,38 @@ const OverviewWrapper = styled.div`
 
 
 
-export { ContentWrapper, DappContentWrapper, InputWrapper, OverviewWrapper }
+const ProductWrapper = styled.div`
+  display: flex;
+
+  flex-direction: column;
+  justify-content: flex-start;
+  
+  box-sizing: border-box;
+
+  input {
+    box-sizing: border-box;
+    border-radius: 5px;
+    padding: 10px 10px;
+    margin-bottom: 10px;
+    display: block;
+    font-size: 18px;
+    width: 100%;
+  }
+  
+  button {
+    width: 100%;
+    border-radius: 5px;
+    padding: 10px 10px;
+    cursor: pointer;
+    color: #eee;
+    font-size: 20px;
+    background: #131a35;
+    opacity: 0.8;
+  }
+
+`
+
+
+
+
+export { ContentWrapper, DappContentWrapper, InputWrapper, OverviewWrapper, ProductWrapper }

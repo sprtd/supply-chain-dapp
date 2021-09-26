@@ -4,7 +4,7 @@ import { FunctionContext } from '../../contexts/function-context'
 import { TabsContext } from '../../contexts/tabs-context'
 import Tabs from '../tabs/tabs.component'
 
-import { ContentWrapper, DappContentWrapper, InputWrapper, OverviewWrapper } from './content.style'
+import { ContentWrapper, DappContentWrapper, InputWrapper, OverviewWrapper, ProductWrapper } from './content.style'
 import { toWei, fromWei } from '../../utils/conversion'
 
 const Content = () => {
@@ -149,6 +149,48 @@ const Content = () => {
     }
   }
 
+
+
+  /* Handle Add Farmer ************************ */
+
+  const [distributor, setDistributor] = useState('')
+
+  const addDistributorAccount  = async () => {
+    try {
+      await contract.methods.enableDistributor(distributor).send({from: web3Account})
+
+    } catch(err) {
+      console.log(err)
+    }
+  }
+
+
+
+  
+  /* Handle Buy Item ************************ */
+  const initialBuyState = {
+    SKU: '', 
+    price: ''
+  }
+  const [buySKU, setBuySKU] = useState(initialBuyState)
+
+  const handleBuyChange = e => {
+    const { name, value } = e.target
+    setBuySKU(prev => ({...prev, [name]: value}))
+  }
+
+  const handleBuy = async () => {
+    try {
+      await contract.methods.buyItem(buySKU.SKU).send({from: web3Account, value: toWei(buySKU.price)})
+   
+
+    } catch(err) {
+      console.log(err)
+    }
+  }
+
+
+
   
 
 
@@ -203,7 +245,6 @@ const Content = () => {
           <input type="text" placeholder='Farm Latitude' onChange={ handleChange } name='farmLatitude'  value={ farmLatitude } />
           <input type="text" placeholder='Farm Longitude' onChange={ handleChange } name='farmLongitude'  value={ farmLongitude } />
           <input type="text" placeholder='Product Notes' onChange={ handleChange } name='productNotes'  value={ productNotes } />
-          {/* {console.log(harvestData)} */}
           <button onClick={ handleHarvest }>Harvest</button>
         </InputWrapper>
 
@@ -226,25 +267,45 @@ const Content = () => {
         </InputWrapper>
 
 
-        <InputWrapper style={{display: productDetails ? 'flex' : 'none'}}>
-          <input type="number" placeholder='Enter SKU' onChange={e => setTokenId1(e.target.value) }  value={ tokenId1 } />
-          <button onClick={ '' }>Buy</button>
-        </InputWrapper>
 
-        <InputWrapper style={{display: productDetails ? 'flex' : 'none'}}>
-          <input type="number" placeholder='Enter SKU' onChange={e => setTokenId1(e.target.value) }  value={ tokenId1 } />
+   
+        
+        {/* Product ************************ ************************ ************************  */}
+
+        <ProductWrapper style={{display: productDetails ? 'flex' : 'none'}}>
+          <input type="text" placeholder='Enter Prospective Distributor Address' onChange={e => setDistributor(e.target.value) }  value={ distributor } />
+          <button onClick={ addDistributorAccount }>Add Distributor</button>
+
+          <input type="number" placeholder='Enter SKU' onChange={handleBuyChange}  name='SKU' value={ buySKU.SKU }  style={{marginTop: '20vh'}}/>
+          <input type="number" placeholder='Enter Amount in ETH' onChange={handleBuyChange} name='price' value={ buySKU.price }  />
+          <button onClick={ handleBuy }>Buy</button>
+        </ProductWrapper>
+
+        <ProductWrapper style={{display: productDetails ? 'flex' : 'none'}}>
+          <input type="number" placeholder='Enter SKU' onChange={ handleAddFarmerChange } name='SKU' value={ farmer.SKU } />
+          <input type="text" placeholder='Enter Prospective Retailer Address' onChange={ handleAddFarmerChange } name='address'  value={ farmer.address } />
+          <button onClick={ addFarmerAccount }>Add Retailer</button>
+
+          <input type="number" placeholder='Enter SKU' onChange={e => setTokenId1(e.target.value) }  value={ tokenId1 }  style={{marginTop: '20vh'}}/>
           <button onClick={ '' }>Ship</button>
-        </InputWrapper>
+        </ProductWrapper>
 
-        <InputWrapper style={{display: productDetails ? 'flex' : 'none'}}>
+       
+
+        <ProductWrapper style={{display: productDetails ? 'flex' : 'none'}}>
           <input type="number" placeholder='Enter SKU' onChange={e => setTokenId1(e.target.value) }  value={ tokenId1 } />
           <button onClick={ '' }>Receive</button>
-        </InputWrapper>
+        </ProductWrapper>
 
-        <InputWrapper style={{display: productDetails ? 'flex' : 'none'}}>
-          <input type="number" placeholder='Enter SKU' onChange={e => setTokenId1(e.target.value) }  value={ tokenId1 } />
+        <ProductWrapper style={{display: productDetails ? 'flex' : 'none'}}>
+          <input type="number" placeholder='Enter SKU' onChange={ handleAddFarmerChange } name='SKU' value={ farmer.SKU } />
+          <input type="text" placeholder='Enter Prospective Consumer Address' onChange={ handleAddFarmerChange } name='address'  value={ farmer.address } />
+          <button onClick={ addFarmerAccount }>Add Consumer</button>
+
+          <input type="number" placeholder='Enter SKU' onChange={e => setTokenId1(e.target.value) }  value={ tokenId1 }  style={{marginTop: '20vh'}}/>
           <button onClick={ '' }>Purchase</button>
-        </InputWrapper>
+        </ProductWrapper>
+
 
       </DappContentWrapper>
     </ContentWrapper>
