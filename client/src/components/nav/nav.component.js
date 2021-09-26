@@ -17,7 +17,7 @@ const Navbar = () => {
       <Hamburger  onClick={()  => {
         setToggleNav(prev => !prev)}
       }>
-        <span ></span>
+        <span></span>
         <span></span>
         <span></span>
       </Hamburger >
@@ -25,7 +25,7 @@ const Navbar = () => {
         <ul >
           { web3Account ?  
           <a 
-            href={`https://etherscan.io/address/${web3Account}`}
+            href={`https://rinkeby.etherscan.io/address/${web3Account}`}
             target="_blank"
             rel="noopener noreferrer"
           >{ `${web3Account.substring(0, 10)}` }</a> : null }

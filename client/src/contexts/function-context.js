@@ -4,27 +4,17 @@ export const FunctionContext = createContext()
 
 
 const FunctionContextProvider = ({ children }) => {
-  const [adopters, setAdopters] = useState('')
 
   const [contract, setContract] = useState('')
-
-  
 
   // set contract instance
   const setContractInstance = payload => {
     setContract(payload)
-    
   }
 
-
-  // get adopters array
-  const getAdopters = payload => {
-    setAdopters(payload)
-
-  }
-
+ 
   return(
-    <FunctionContext.Provider value={{ contract, setContractInstance, getAdopters, adopters }}>
+    <FunctionContext.Provider value={{ contract, setContractInstance }}>
       { children }
     </FunctionContext.Provider>
 

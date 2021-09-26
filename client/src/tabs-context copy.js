@@ -25,7 +25,6 @@ const TabsContextProvider = ({ children }) => {
     setExchangeStar(false)
     setTransferStar(false)
   }
-  /home/sprtd/Desktop/Udacity/lesson-4-supply-chain/supply-chain-dapp/client/src/tabs-context copy.js
 
   const handleExchangeStar = () => {
     setExchangeStar(true)

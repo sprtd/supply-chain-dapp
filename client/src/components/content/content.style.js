@@ -63,4 +63,47 @@ const InputWrapper = styled.div`
 
 `
 
-export { ContentWrapper, DappContentWrapper, InputWrapper }
+
+
+const OverviewWrapper = styled.div`
+  display: flex;
+  box-sizing: border-box;
+  width: 35%;
+  justify-content: flex-start;
+  align-items: center;
+  flex-direction: column;
+  background: #eee;
+  opacity: 0.8;
+  
+  // margin-top: 1vh ;
+  padding: 20px;
+  border-radius: 5px;
+  
+  color: #131a35;
+  
+  &:hover {
+    transform: scale(1.01);
+    transition: 0.5s;
+  }
+  h3 {
+  
+  }
+  
+  p {
+    display: flex;
+    width: 80%;
+
+    border: 1px solid #131a35;
+    color: #131a35;
+    padding: 10px 20px;
+    justify-content: space-between;
+    border-radius: 5px;
+    margin-top: 0;
+  }
+
+`
+
+
+
+
+export { ContentWrapper, DappContentWrapper, InputWrapper, OverviewWrapper }

@@ -10,7 +10,6 @@ const AccountContextProvider = ({ children }) => {
     msg: ''
   })
 
-  const [lootOwner, setLootOwner] = useState('')
 
   const [web3Account, setWeb3Account] = useState()
 
@@ -23,12 +22,9 @@ const AccountContextProvider = ({ children }) => {
     setError(payload)
   }
 
-  const handleOwner = payload => {
-    setLootOwner(payload)
-  }
 
   return(
-    <AccountContext.Provider value={{ web3Account, setAccountDetails, setErrorState, error, handleOwner, lootOwner }}>
+    <AccountContext.Provider value={{ web3Account, setAccountDetails, setErrorState, error }}>
       { children }
     </AccountContext.Provider>
 

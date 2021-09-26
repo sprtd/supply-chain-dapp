@@ -84,30 +84,30 @@ contract('Supply Chain', async accountsPayload => {
       const harvestFarmDetails = await supplyChain.fetchFarmDetails.call(sku)
       const { 
         itemSKU, 
-        ownerID: harvestOwnerID, 
-        originFarmerID: harvestOriginFarmerID, 
-        originFarmName: harvestOriginFarmName,
-        originFarmInfo: harvestOriginFarmInfo,
-        originFarmLatitude: harvestOriginFarmLatitude,
-        originFarmLongitude: harvestOriginFarmLongitude
+        ownerID: fetchedOwner, 
+        originFarmerID: fetchedFarmer, 
+        originFarmName: fetchedFatmName,
+        originFarmInfo: fetchedFarmInfo,
+        originFarmLatitude: fetchedFarmLatitude,
+        originFarmLongitude: fetchedFarmLongitude
       } = harvestFarmDetails
 
       const harvestProductDetails = await supplyChain.fetchProductDetails.call(sku)
-      const { itemUPC, productNotes: harvestProductNotes, status } = harvestProductDetails
+      const { itemUPC, productNotes: fetchedProductNotes, status } = harvestProductDetails
 
     
       // farm 
       assert.equal(itemSKU, sku)
-      assert.equal(harvestOwnerID, farmer)
-      assert.equal(harvestOriginFarmerID, farmer)
-      assert.equal(harvestOriginFarmName, originFarmName)
-      assert.equal(harvestOriginFarmInfo, originFarmInfo)
-      assert.equal(harvestOriginFarmLatitude, originFarmLatitude)
-      assert.equal(harvestOriginFarmLongitude, originFarmLongitude)
+      assert.equal(fetchedOwner, farmer)
+      assert.equal(fetchedFarmer, farmer)
+      assert.equal(fetchedFatmName, originFarmName)
+      assert.equal(fetchedFarmInfo, originFarmInfo)
+      assert.equal(fetchedFarmLatitude, originFarmLatitude)
+      assert.equal(fetchedFarmLongitude, originFarmLongitude)
 
       // product
       assert.equal(itemUPC, sku)
-      assert.equal(harvestProductNotes, productNotes)
+      assert.equal(fetchedProductNotes, productNotes)
       assert.equal(status, 'Harvested')
       assert.equal(eventEmitted, true, 'Error: ItemHarvested event not emitted')
     })
@@ -245,21 +245,54 @@ contract('Supply Chain', async accountsPayload => {
       const { ownerID } = farmDetails
       const { status } = productDetails
 
+      console.log('owner', ownerID)
+      console.log('status', status)
+
   
       assert.equal(ownerID, consumer)
       assert.equal(status, 'Purchased') // item status is marked as received
       assert.equal(eventEmitted, true, 'Error: ItemPurchased not emitted') 
-
-      
     })
 
-    it('')
+    it('Allows anyone fetch farm details', async () => {
+      const sku = 1
+      
+      const farmDetails = await supplyChain.fetchFarmDetails.call(sku, {from: randomAccount})
+      const { 
+        itemSKU, 
+        ownerID: fetchedOwner, 
+        originFarmerID: fetchedFarmer, 
+        originFarmName: fetchedFarmName,
+        originFarmInfo: fetchedFarmInfo,
+        originFarmLatitude: fetchedFarmLatitude,
+        originFarmLongitude: fetchedFarmLongitude
+      } = farmDetails
 
+      // farm details
+      assert.equal(itemSKU, sku)
+      assert.equal(fetchedFarmer, farmer)
+      assert.equal(fetchedOwner, consumer)
+      assert.equal(fetchedFarmName, originFarmName)
+      assert.equal(fetchedFarmInfo, originFarmInfo)
+      assert.equal(fetchedFarmLatitude, originFarmLatitude)
+      assert.equal(fetchedFarmLongitude, originFarmLongitude)
 
+    })
+    
+    
+    it('Allows anyone fetch product details', async () => {
+      const sku = 1
+      const productDetails = await supplyChain.fetchProductDetails.call(sku, {from: randomAccount})
+      const { itemUPC, productNotes: fetchedProductNotes, status, distributorID, retailerID, consumerID } = productDetails
+      
+      // product details
+      assert.equal(itemUPC, sku)
+      assert.equal(distributorID, distributor)
+      assert.equal(retailerID, retailer)
+      assert.equal(consumerID, consumer)
+      assert.equal(fetchedProductNotes, productNotes)
+      assert.equal(status, 'Purchased')
+    })
   })
-
-  
-
-  
 })
 

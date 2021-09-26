@@ -14,19 +14,17 @@ const TabWrapper = styled.div`
   
 
   overflow: hidden;
-  // position: fixed;
 
   width: 100%;
   height: 8vh;
 
+
   margin-bottom: 10vh;
-
-
-
+  
   h3 {
     cursor: pointer;
     padding: 30px 150px;
-    text-wrap: none;
+    // text-wrap: none;
     text-align: center;
     height: 5vh;
     
