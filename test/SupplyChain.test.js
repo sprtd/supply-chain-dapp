@@ -6,8 +6,9 @@ let supplyChain, accounts, deployer, farmer, distributor, retailer, consumer, ra
 let originFarmerID
 let originFarmName = 'Alpha Farm 1'
 let originFarmInfo = 'Mechanized Apple Farming'
-let originFarmLatitude = process.env.LATITUDE
-let originFarmLongitude = process.env.LONGITUDE
+
+let originFarmLatitude = "-38.239770"
+let originFarmLongitude = "144.341490"
 let productNotes = 'Large-scale harvest'
 
 // conversion helpers

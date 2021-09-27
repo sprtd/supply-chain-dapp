@@ -292,8 +292,6 @@ const Content = () => {
       <Tabs />
       <DappContentWrapper>
 
-       
-      
         <InputWrapper style={{display: productOverview ? 'flex' : 'none'}}>
           <Tippy content={<ToolTip>Enter SKU to get farm and product details </ToolTip>}>
             <input type="number" placeholder='Enter SKU' onChange={e => setSKU(e.target.value) }  value={ sku } />
