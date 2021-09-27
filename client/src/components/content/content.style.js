@@ -141,7 +141,13 @@ const ProductWrapper = styled.div`
 
 `
 
+const ToolTip = styled.span`
+  background: transparent;
+  color: #fff;
+  padding: 0;
+
+`
 
 
 
-export { ContentWrapper, DappContentWrapper, InputWrapper, OverviewWrapper, ProductWrapper }
+export { ContentWrapper, DappContentWrapper, InputWrapper, OverviewWrapper, ProductWrapper, ToolTip }
